@@ -3,7 +3,7 @@ import time
 import os
 import numpy as np
 # os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-import threading
+# import threading
 
 model = r"models\haarcascade_frontalface_default.xml"
 fr = cv.CascadeClassifier(model)
@@ -46,6 +46,7 @@ while True:
     #         pass
     faces = None
     gray_img = cv.cvtColor( frame, cv.COLOR_RGB2BGR )
+    cv.namedWindow("faces")
     for x, y, w, h in fr.detectMultiScale( gray_img, minNeighbors=10 ):
         cv.rectangle( frame,(x,y),(x+w,y+h),(0,0,255),1 )
 
@@ -54,7 +55,8 @@ while True:
         faces = np.vstack(( faces, cropped_img )) if not faces is None else cropped_img
         # break
 
-    if not faces is None : cv.imshow('image', frame )
+    cv.imshow("image", frame )
+    if not faces is None : cv.imshow('faces', faces )
 
     if cv.waitKey(1) == ord('q'):
         break
