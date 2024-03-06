@@ -1,8 +1,12 @@
 import cv2 as cv
 import time
-from deepface import DeepFace
+import os
+import numpy as np
+# os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import threading
 
+model = r"models\haarcascade_frontalface_default.xml"
+fr = cv.CascadeClassifier(model)
 face_match = False
 
 cap = cv.VideoCapture(0)
@@ -24,9 +28,6 @@ if not cap.isOpened():
 # cv.createTrackbar('G','image',0,255,handle_change)
 # cv.createTrackbar('B','image',0,255,handle_change)
 
-def check_face(frame):
-    print("thread")
-
 counter = 0
 while True:
     ret, frame = cap.read()
@@ -38,18 +39,23 @@ while True:
 
     frame = cv.flip(frame, 1)
 
-    if counter %30 == 0:#limiting to once every 30 frame
-        try :
-            threading.Thread( target=check_face, args=(frame.copy(),) ).start()
-        except ValueError:
-            pass
+    # if counter %30 == 0:#limiting to once every 30 frame
+    #     try :
+    #         threading.Thread( target=check_face, args=(frame.copy(),) ).start()
+    #     except ValueError:
+    #         pass
+    faces = None
+    gray_img = cv.cvtColor( frame, cv.COLOR_RGB2BGR )
+    for x, y, w, h in fr.detectMultiScale( gray_img, minNeighbors=10 ):
+        cv.rectangle( frame,(x,y),(x+w,y+h),(0,0,255),1 )
 
-    if face_match : 
-        # display result
-        pass
+        cropped_img = frame[ y:y+h, x:x+w :]
+        cropped_img = cv.resize( cropped_img, (150,150))
+        faces = np.vstack(( faces, cropped_img )) if not faces is None else cropped_img
+        # break
 
-    cv.imshow('image',frame)
-    
+    if not faces is None : cv.imshow('image', frame )
+
     if cv.waitKey(1) == ord('q'):
         break
     counter += 1
