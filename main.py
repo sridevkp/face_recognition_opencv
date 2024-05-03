@@ -5,8 +5,13 @@ import numpy as np
 # os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 # import threading
 
-model = r"models\haarcascade_frontalface_default.xml"
-fr = cv.CascadeClassifier(model)
+# model = r"models\haarcascade_frontalface_default.xml"
+face_cascade = cv.CascadeClassifier("models/haarcascade_frontalface_default.xml")
+fbody_cascade = cv.CascadeClassifier("models/haarcascade_fullbody.xml")
+smile_cascade = cv.CascadeClassifier("models/haarcascade_smile.xml")
+eye_cascade = cv.CascadeClassifier("models/haarcascade_eye.xml")
+
+
 face_match = False
 
 cap = cv.VideoCapture(0)
@@ -47,13 +52,22 @@ while True:
     faces = None
     gray_img = cv.cvtColor( frame, cv.COLOR_RGB2BGR )
     cv.namedWindow("faces")
-    for x, y, w, h in fr.detectMultiScale( gray_img, minNeighbors=10 ):
+    for x, y, w, h in face_cascade.detectMultiScale( gray_img, minNeighbors=10 ):
         cv.rectangle( frame,(x,y),(x+w,y+h),(0,0,255),1 )
 
         cropped_img = frame[ y:y+h, x:x+w :]
-        cropped_img = cv.resize( cropped_img, (150,150))
-        faces = np.vstack(( faces, cropped_img )) if not faces is None else cropped_img
-        # break
+        resized_img = cv.resize( cropped_img, (150,150))
+        faces = np.vstack(( faces, resized_img )) if not faces is None else resized_img
+        
+        for sx, sy, sw, sh in smile_cascade.detectMultiScale( cropped_img, minNeighbors=10 ):
+            cv.rectangle( frame,( x +sx, y +sy ),( x +sx +sw, y +sy +sh ),(0,255,0),1 )
+
+        for ex, ey, ew, eh in eye_cascade.detectMultiScale( cropped_img, minNeighbors=5 ):
+            cv.rectangle( frame,( x +ex, y +ey ),( x +ex +ew, y +ey +eh ),(255,0,0),1 )
+
+    # for x, y, w, h in fbody_cascade.detectMultiScale( gray_img, minNeighbors=12 ):
+    #     cv.rectangle( frame,(x,y),(x+w,y+h),(255,255,0),1 )
+
 
     cv.imshow("image", frame )
     if not faces is None : cv.imshow('faces', faces )
